@@ -3,7 +3,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
 import { useFilters } from '@/hooks/useFilters';
 import { useImageStore } from '@/store/imageStore';
@@ -19,17 +18,17 @@ export const FilterSection: React.FC = () => {
   const hasImage = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
 
   return (
-    <Accordion title="Filters" defaultOpen={false}>
+    <div className="space-y-4">
       {/* Batch Mode Info */}
       {mode === 'batch' && batchImages.length > 0 && (
-        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
+        <div className="p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
           <strong>Batch Mode:</strong> Filter will apply to all {batchImages.length} images
         </div>
       )}
 
       {/* Blur Section */}
       <div className="space-y-2">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Blur</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Blur</p>
         
         <div className="flex gap-1 mb-2">
           {(['light', 'medium', 'heavy'] as const).map((strength) => (
@@ -70,7 +69,7 @@ export const FilterSection: React.FC = () => {
 
       {/* Sharpen Section */}
       <div className="space-y-2 pt-3 border-t border-gray-700">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Sharpen</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Sharpen</p>
         
         <div className="flex gap-1 mb-2">
           {(['normal', 'strong'] as const).map((strength) => (
@@ -101,7 +100,7 @@ export const FilterSection: React.FC = () => {
 
       {/* Edge Detection Section */}
       <div className="space-y-2 pt-3 border-t border-gray-700">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Edge Detection</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Edge Detection</p>
         
         <div className="flex gap-1 mb-2">
           {(['sobel', 'laplacian', 'prewitt'] as const).map((method) => (
@@ -132,7 +131,7 @@ export const FilterSection: React.FC = () => {
 
       {/* Other Effects */}
       <div className="space-y-2 pt-3 border-t border-gray-700">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Effects</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Effects</p>
         
         <Button
           onClick={() => emboss()}
@@ -150,6 +149,6 @@ export const FilterSection: React.FC = () => {
           Processing batch... Please wait
         </div>
       )}
-    </Accordion>
+    </div>
   );
 };

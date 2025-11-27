@@ -3,7 +3,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
 import { Slider } from '@/components/ui/Slider';
 import { useMorphology } from '@/hooks/useMorphology';
@@ -25,17 +24,17 @@ export const MorphologySection: React.FC = () => {
   const hasImage = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
 
   return (
-    <Accordion title="Morphology" defaultOpen={false}>
+    <div className="space-y-4">
       {/* Batch Mode Info */}
       {mode === 'batch' && batchImages.length > 0 && (
-        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
+        <div className="p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
           <strong>Batch Mode:</strong> Operation will apply to all {batchImages.length} images
         </div>
       )}
 
       {/* Structuring Element Settings */}
       <div className="space-y-2">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">
           Structuring Element
         </p>
 
@@ -69,7 +68,7 @@ export const MorphologySection: React.FC = () => {
 
       {/* Basic Operations */}
       <div className="space-y-2 pt-3 border-t border-gray-700">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">
           Basic Operations
         </p>
 
@@ -96,7 +95,7 @@ export const MorphologySection: React.FC = () => {
 
       {/* Advanced Operations */}
       <div className="space-y-2 pt-3 border-t border-gray-700">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">
           Advanced Operations
         </p>
 
@@ -143,6 +142,6 @@ export const MorphologySection: React.FC = () => {
           Processing batch... Please wait
         </div>
       )}
-    </Accordion>
+    </div>
   );
 };

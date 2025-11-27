@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Eye, EyeOff, RotateCcw, Check } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { RotateCcw, Check } from 'lucide-react';
 import { Accordion } from '@/components/ui/Accordion';
 import { Button } from '@/components/ui/Button';
 import { Slider } from '@/components/ui/Slider';
@@ -21,13 +21,28 @@ export const AdjustmentSection: React.FC = () => {
     applyNegativeFilter,
   } = useAdjustments();
 
-  const hasImage = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
-  const hasChanges = adjustments.brightness !== 0 || 
-                     adjustments.contrast !== 0 || 
-                     adjustments.saturation !== 0;
+  // ——————————————————————
+  // FORCE PREVIEW ALWAYS ON
+  // ——————————————————————
+  useEffect(() => {
+    if (!isPreviewMode) {
+      togglePreview(true);
+    }
+  }, [isPreviewMode, togglePreview]);
+
+  const hasImage =
+    mode === 'batch'
+      ? batchImages.length > 0
+      : !!imageData.current;
+
+  const hasChanges =
+    adjustments.brightness !== 0 ||
+    adjustments.contrast !== 0 ||
+    adjustments.saturation !== 0;
 
   return (
     <Accordion title="Adjustments" defaultOpen={true}>
+      
       {/* Batch Mode Info */}
       {mode === 'batch' && batchImages.length > 0 && (
         <div className="mb-3 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
@@ -35,23 +50,7 @@ export const AdjustmentSection: React.FC = () => {
         </div>
       )}
 
-      {/* Preview Toggle - Only for Single Mode */}
-      {mode === 'single' && (
-        <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded mb-3">
-          <span className="text-xs text-gray-400">Real-time Preview</span>
-          <button
-            onClick={() => togglePreview(!isPreviewMode)}
-            disabled={!hasImage || isProcessing}
-            className={`p-1.5 rounded transition-colors ${
-              isPreviewMode
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-600 text-gray-400 hover:bg-gray-500'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {isPreviewMode ? <Eye size={16} /> : <EyeOff size={16} />}
-          </button>
-        </div>
-      )}
+      {/* 🔥 Removed Preview Toggle completely 🔥 */}
 
       {/* Sliders */}
       <Slider
@@ -81,7 +80,7 @@ export const AdjustmentSection: React.FC = () => {
         disabled={!hasImage || isProcessing}
       />
 
-      {/* Apply/Reset Buttons */}
+      {/* Apply / Reset */}
       {hasChanges && (
         <div className="flex gap-2 pt-2 border-t border-gray-700">
           <Button
@@ -94,6 +93,7 @@ export const AdjustmentSection: React.FC = () => {
             <Check size={14} />
             {mode === 'batch' ? 'Apply to All' : 'Apply'}
           </Button>
+
           <Button
             onClick={resetAdjustments}
             variant="secondary"
@@ -109,8 +109,10 @@ export const AdjustmentSection: React.FC = () => {
 
       {/* Quick Filters */}
       <div className="pt-3 border-t border-gray-700 space-y-2">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">Quick Filters</p>
-        
+        <p className="text-xs text-gray-500 uppercase tracking-wide">
+          Quick Filters
+        </p>
+
         <Button
           onClick={applyGrayscaleFilter}
           variant="secondary"

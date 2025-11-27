@@ -4,8 +4,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Image Processing Studio',
-  description: 'Web-based image processing application with filters, histogram, and morphology operations',
+  title: 'Pengolahan Citra',
+  description: 'Aplikasi pengolah gambar sederhana menggunakan Next.js dan Tailwind CSS',
 };
 
 export default function RootLayout({

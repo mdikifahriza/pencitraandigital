@@ -1,22 +1,57 @@
+// src/components/workspace/Canvas.tsx
+
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useImageStore } from '@/store/imageStore';
-import { ImageIcon, Loader2 } from 'lucide-react';
+import { ImageIcon, Loader2, Upload } from 'lucide-react';
+import { useImageProcessor } from '@/hooks/useImageProcessor';
 
 export const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref untuk input file tersembunyi
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
 
   const { 
     imageData, 
     isProcessing, 
     zoomPan, 
     beforeAfter,
-    setPan 
+    setPan,
+    mode,
+    addBatchImages
   } = useImageStore();
+
+  const { handleUpload } = useImageProcessor();
+
+  // Fungsi untuk menangani klik tombol Select Files
+  const handleSelectFiles = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Fungsi untuk menangani perubahan file
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    try {
+      if (mode === 'batch') {
+        await addBatchImages(files);
+      } else {
+        await handleUpload(files[0]);
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error);
+    }
+
+    // Reset input
+    e.target.value = '';
+  };
 
   // Draw image with zoom and pan
   useEffect(() => {
@@ -77,7 +112,7 @@ export const Canvas: React.FC = () => {
 
   // Mouse pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (beforeAfter.enabled) return; // Disable panning in before/after mode
+    if (beforeAfter.enabled) return;
     setIsPanning(true);
     setLastPos({ x: e.clientX, y: e.clientY });
   };
@@ -106,6 +141,38 @@ export const Canvas: React.FC = () => {
     useImageStore.getState().setBeforeAfterPosition(percentage);
   };
 
+  // Drag & Drop handlers (same as BatchPanel)
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    try {
+      if (mode === 'batch') {
+        await addBatchImages(files);
+      } else {
+        await handleUpload(files[0]);
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error);
+    }
+  }, [mode, addBatchImages, handleUpload]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    // Only hide if leaving the container, not child elements
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  }, []);
+
   return (
     <div 
       ref={containerRef}
@@ -114,8 +181,45 @@ export const Canvas: React.FC = () => {
       onMouseMove={beforeAfter.enabled ? undefined : handleMouseMove}
       onMouseUp={beforeAfter.enabled ? undefined : handleMouseUp}
       onMouseLeave={beforeAfter.enabled ? undefined : handleMouseUp}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       style={{ cursor: isPanning ? 'grabbing' : (beforeAfter.enabled ? 'default' : 'grab') }}
     >
+      {/* Input file tersembunyi */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple={mode === 'batch'}
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Drag & Drop Overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none p-8">
+          <div className="w-full max-w-4xl border-2 border-dashed border-blue-500 rounded-lg p-16 text-center bg-gray-800/95 backdrop-blur-sm">
+            <Upload size={80} className="mx-auto text-gray-500 mb-6" strokeWidth={1.5} />
+            <h3 className="text-2xl font-semibold text-white mb-3">
+              {mode === 'batch' ? 'Upload Multiple Images' : 'Upload Image'}
+            </h3>
+            <p className="text-gray-400 text-base mb-8">
+              Drag & drop images here or click to browse
+            </p>
+            <button 
+              onClick={handleSelectFiles}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-base font-medium transition-colors"
+            >
+              Select Files
+            </button>
+            <p className="text-xs text-gray-500 mt-6">
+              Supported: JPG, PNG, WebP, GIF (max 10MB each)
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Processing Overlay */}
       {isProcessing && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
@@ -153,15 +257,24 @@ export const Canvas: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="text-center px-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-gray-800 mb-4">
-            <ImageIcon size={40} className="text-gray-600 lg:w-12 lg:h-12" />
-          </div>
-          <div className="text-gray-500 text-base lg:text-lg mb-2 font-medium">
-            No image loaded
-          </div>
-          <div className="text-gray-600 text-sm">
-            Upload an image to get started
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="border-2 border-dashed border-blue-500 rounded-lg p-16 text-center bg-gray-800/50">
+            <Upload size={80} className="mx-auto text-gray-500 mb-6" strokeWidth={1.5} />
+            <h3 className="text-2xl font-semibold text-white mb-3">
+              {mode === 'batch' ? 'Upload Multiple Images' : 'Upload Image'}
+            </h3>
+            <p className="text-gray-400 text-base mb-8">
+              Drag & drop images here or click to browse
+            </p>
+            <button 
+              onClick={handleSelectFiles}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-base font-medium transition-colors"
+            >
+              Select Files
+            </button>
+            <p className="text-xs text-gray-500 mt-6">
+              Supported: JPG, PNG, WebP, GIF (max 10MB each)
+            </p>
           </div>
         </div>
       )}
