@@ -4,10 +4,12 @@ import React, { useRef } from 'react';
 import { Upload, Download, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useImageProcessor } from '@/hooks/useImageProcessor';
+import { useImageStore } from '@/store/imageStore';
 
 export const FileSection: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { imageData, handleUpload, handleDownload, handleReset, handleClear } = useImageProcessor();
+  const { mode, addBatchImages, batchImages } = useImageStore();
   const [error, setError] = React.useState<string>('');
 
   const onUploadClick = () => {
@@ -15,12 +17,20 @@ export const FileSection: React.FC = () => {
   };
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setError('');
+    
     try {
-      await handleUpload(file);
+      if (mode === 'batch') {
+        // Batch mode: upload multiple files
+        await addBatchImages(Array.from(files));
+      } else {
+        // Single mode: upload one file
+        const file = files[0];
+        await handleUpload(file);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload image');
     }
@@ -38,6 +48,8 @@ export const FileSection: React.FC = () => {
     }
   };
 
+  const hasContent = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
+
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
@@ -48,6 +60,7 @@ export const FileSection: React.FC = () => {
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        multiple={mode === 'batch'}
         onChange={onFileChange}
         className="hidden"
       />
@@ -60,42 +73,52 @@ export const FileSection: React.FC = () => {
           className="w-full flex items-center justify-center gap-2"
         >
           <Upload size={16} />
-          Upload Image
+          {mode === 'batch' ? 'Upload Images (Multiple)' : 'Upload Image'}
         </Button>
 
-        <Button
-          onClick={onDownloadClick}
-          variant="secondary"
-          size="sm"
-          disabled={!imageData.current}
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <Download size={16} />
-          Save Image
-        </Button>
+        {mode === 'single' && (
+          <>
+            <Button
+              onClick={onDownloadClick}
+              variant="secondary"
+              size="sm"
+              disabled={!imageData.current}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Download size={16} />
+              Save Image
+            </Button>
 
-        <Button
-          onClick={handleReset}
-          variant="secondary"
-          size="sm"
-          disabled={!imageData.original}
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <RotateCcw size={16} />
-          Reset
-        </Button>
+            <Button
+              onClick={handleReset}
+              variant="secondary"
+              size="sm"
+              disabled={!imageData.original}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <RotateCcw size={16} />
+              Reset
+            </Button>
+          </>
+        )}
 
         <Button
           onClick={handleClear}
           variant="danger"
           size="sm"
-          disabled={!imageData.current}
+          disabled={!hasContent}
           className="w-full flex items-center justify-center gap-2"
         >
           <Trash2 size={16} />
-          Clear
+          {mode === 'batch' ? 'Clear All' : 'Clear'}
         </Button>
       </div>
+
+      {mode === 'batch' && batchImages.length > 0 && (
+        <div className="text-xs text-blue-400 bg-blue-900/20 p-2 rounded">
+          {batchImages.length} image{batchImages.length !== 1 ? 's' : ''} loaded. Operations will apply to all images.
+        </div>
+      )}
 
       {error && (
         <div className="text-xs text-red-400 bg-red-900/20 p-2 rounded">

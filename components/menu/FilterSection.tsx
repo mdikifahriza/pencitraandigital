@@ -9,17 +9,24 @@ import { useFilters } from '@/hooks/useFilters';
 import { useImageStore } from '@/store/imageStore';
 
 export const FilterSection: React.FC = () => {
-  const { imageData, isProcessing } = useImageStore();
+  const { imageData, isProcessing, mode, batchImages } = useImageStore();
   const { gaussianBlur, sharpen, edgeDetection, emboss, motionBlur } = useFilters();
   
   const [blurStrength, setBlurStrength] = useState<'light' | 'medium' | 'heavy'>('medium');
   const [sharpenStrength, setSharpenStrength] = useState<'normal' | 'strong'>('normal');
   const [edgeMethod, setEdgeMethod] = useState<'sobel' | 'laplacian' | 'prewitt'>('sobel');
 
-  const hasImage = !!imageData.current;
+  const hasImage = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
 
   return (
     <Accordion title="Filters" defaultOpen={false}>
+      {/* Batch Mode Info */}
+      {mode === 'batch' && batchImages.length > 0 && (
+        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
+          <strong>Batch Mode:</strong> Filter will apply to all {batchImages.length} images
+        </div>
+      )}
+
       {/* Blur Section */}
       <div className="space-y-2">
         <p className="text-xs text-gray-500 uppercase tracking-wide">Blur</p>
@@ -47,7 +54,7 @@ export const FilterSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Gaussian Blur
+          {mode === 'batch' ? 'Gaussian Blur (All)' : 'Gaussian Blur'}
         </Button>
 
         <Button
@@ -57,7 +64,7 @@ export const FilterSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Motion Blur
+          {mode === 'batch' ? 'Motion Blur (All)' : 'Motion Blur'}
         </Button>
       </div>
 
@@ -88,7 +95,7 @@ export const FilterSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Sharpen
+          {mode === 'batch' ? 'Sharpen (All)' : 'Sharpen'}
         </Button>
       </div>
 
@@ -119,7 +126,7 @@ export const FilterSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Detect Edges
+          {mode === 'batch' ? 'Detect Edges (All)' : 'Detect Edges'}
         </Button>
       </div>
 
@@ -134,9 +141,15 @@ export const FilterSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Emboss
+          {mode === 'batch' ? 'Emboss (All)' : 'Emboss'}
         </Button>
       </div>
+
+      {isProcessing && mode === 'batch' && (
+        <div className="mt-3 text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded animate-pulse">
+          Processing batch... Please wait
+        </div>
+      )}
     </Accordion>
   );
-}; 
+};

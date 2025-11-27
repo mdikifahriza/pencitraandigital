@@ -10,7 +10,7 @@ import { useHistogram } from '@/hooks/useHistogram';
 import { useImageStore } from '@/store/imageStore';
 
 export const HistogramSection: React.FC = () => {
-  const { imageData, isProcessing } = useImageStore();
+  const { imageData, isProcessing, mode, batchImages } = useImageStore();
   const {
     applyHistogramEqualization,
     applyHistogramStretch,
@@ -22,10 +22,17 @@ export const HistogramSection: React.FC = () => {
   const [thresholdValue, setThresholdValue] = useState(128);
   const [blockSize, setBlockSize] = useState(11);
 
-  const hasImage = !!imageData.current;
+  const hasImage = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
 
   return (
     <Accordion title="Histogram & Threshold" defaultOpen={false}>
+      {/* Batch Mode Info */}
+      {mode === 'batch' && batchImages.length > 0 && (
+        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
+          <strong>Batch Mode:</strong> Operation will apply to all {batchImages.length} images
+        </div>
+      )}
+
       {/* Histogram Operations */}
       <div className="space-y-2">
         <p className="text-xs text-gray-500 uppercase tracking-wide">
@@ -39,7 +46,7 @@ export const HistogramSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Histogram Equalization
+          {mode === 'batch' ? 'Histogram Equalization (All)' : 'Histogram Equalization'}
         </Button>
 
         <Button
@@ -49,7 +56,7 @@ export const HistogramSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Histogram Stretch
+          {mode === 'batch' ? 'Histogram Stretch (All)' : 'Histogram Stretch'}
         </Button>
       </div>
 
@@ -75,7 +82,7 @@ export const HistogramSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Apply Global Threshold
+          {mode === 'batch' ? 'Apply Global Threshold (All)' : 'Apply Global Threshold'}
         </Button>
 
         <Button
@@ -85,7 +92,7 @@ export const HistogramSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Otsu's Threshold (Auto)
+          {mode === 'batch' ? "Otsu's Threshold (All)" : "Otsu's Threshold (Auto)"}
         </Button>
 
         <Slider
@@ -105,9 +112,15 @@ export const HistogramSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Adaptive Threshold
+          {mode === 'batch' ? 'Adaptive Threshold (All)' : 'Adaptive Threshold'}
         </Button>
       </div>
+
+      {isProcessing && mode === 'batch' && (
+        <div className="mt-3 text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded animate-pulse">
+          Processing batch... Please wait
+        </div>
+      )}
     </Accordion>
   );
 };

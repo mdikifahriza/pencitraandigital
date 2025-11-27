@@ -9,7 +9,7 @@ import { useAdjustments } from '@/hooks/useAdjustments';
 import { useImageStore } from '@/store/imageStore';
 
 export const AdjustmentSection: React.FC = () => {
-  const { imageData, isProcessing } = useImageStore();
+  const { imageData, isProcessing, mode, batchImages } = useImageStore();
   const {
     adjustments,
     isPreviewMode,
@@ -21,28 +21,37 @@ export const AdjustmentSection: React.FC = () => {
     applyNegativeFilter,
   } = useAdjustments();
 
-  const hasImage = !!imageData.current;
+  const hasImage = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
   const hasChanges = adjustments.brightness !== 0 || 
                      adjustments.contrast !== 0 || 
                      adjustments.saturation !== 0;
 
   return (
     <Accordion title="Adjustments" defaultOpen={true}>
-      {/* Preview Toggle */}
-      <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded">
-        <span className="text-xs text-gray-400">Real-time Preview</span>
-        <button
-          onClick={() => togglePreview(!isPreviewMode)}
-          disabled={!hasImage || isProcessing}
-          className={`p-1.5 rounded transition-colors ${
-            isPreviewMode
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-600 text-gray-400 hover:bg-gray-500'
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {isPreviewMode ? <Eye size={16} /> : <EyeOff size={16} />}
-        </button>
-      </div>
+      {/* Batch Mode Info */}
+      {mode === 'batch' && batchImages.length > 0 && (
+        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
+          <strong>Batch Mode:</strong> Changes will apply to all {batchImages.length} images
+        </div>
+      )}
+
+      {/* Preview Toggle - Only for Single Mode */}
+      {mode === 'single' && (
+        <div className="flex items-center justify-between p-2 bg-gray-700/50 rounded mb-3">
+          <span className="text-xs text-gray-400">Real-time Preview</span>
+          <button
+            onClick={() => togglePreview(!isPreviewMode)}
+            disabled={!hasImage || isProcessing}
+            className={`p-1.5 rounded transition-colors ${
+              isPreviewMode
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-400 hover:bg-gray-500'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isPreviewMode ? <Eye size={16} /> : <EyeOff size={16} />}
+          </button>
+        </div>
+      )}
 
       {/* Sliders */}
       <Slider
@@ -83,7 +92,7 @@ export const AdjustmentSection: React.FC = () => {
             className="flex-1 flex items-center justify-center gap-1"
           >
             <Check size={14} />
-            Apply
+            {mode === 'batch' ? 'Apply to All' : 'Apply'}
           </Button>
           <Button
             onClick={resetAdjustments}
@@ -109,7 +118,7 @@ export const AdjustmentSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Grayscale
+          {mode === 'batch' ? 'Grayscale (All Images)' : 'Grayscale'}
         </Button>
 
         <Button
@@ -119,10 +128,15 @@ export const AdjustmentSection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Negative
+          {mode === 'batch' ? 'Negative (All Images)' : 'Negative'}
         </Button>
       </div>
+
+      {isProcessing && mode === 'batch' && (
+        <div className="mt-3 text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded animate-pulse">
+          Processing batch... Please wait
+        </div>
+      )}
     </Accordion>
   );
 };
-

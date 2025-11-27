@@ -10,7 +10,7 @@ import { useMorphology } from '@/hooks/useMorphology';
 import { useImageStore } from '@/store/imageStore';
 
 export const MorphologySection: React.FC = () => {
-  const { imageData, isProcessing } = useImageStore();
+  const { imageData, isProcessing, mode, batchImages } = useImageStore();
   const {
     applyErosion,
     applyDilation,
@@ -22,10 +22,17 @@ export const MorphologySection: React.FC = () => {
   const [shape, setShape] = useState<'square' | 'cross' | 'circle'>('square');
   const [kernelSize, setKernelSize] = useState(3);
 
-  const hasImage = !!imageData.current;
+  const hasImage = mode === 'batch' ? batchImages.length > 0 : !!imageData.current;
 
   return (
     <Accordion title="Morphology" defaultOpen={false}>
+      {/* Batch Mode Info */}
+      {mode === 'batch' && batchImages.length > 0 && (
+        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400">
+          <strong>Batch Mode:</strong> Operation will apply to all {batchImages.length} images
+        </div>
+      )}
+
       {/* Structuring Element Settings */}
       <div className="space-y-2">
         <p className="text-xs text-gray-500 uppercase tracking-wide">
@@ -73,7 +80,7 @@ export const MorphologySection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Erosion
+          {mode === 'batch' ? 'Erosion (All)' : 'Erosion'}
         </Button>
 
         <Button
@@ -83,7 +90,7 @@ export const MorphologySection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Dilation
+          {mode === 'batch' ? 'Dilation (All)' : 'Dilation'}
         </Button>
       </div>
 
@@ -100,7 +107,7 @@ export const MorphologySection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Opening (Erode → Dilate)
+          {mode === 'batch' ? 'Opening (All)' : 'Opening (Erode → Dilate)'}
         </Button>
 
         <Button
@@ -110,7 +117,7 @@ export const MorphologySection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Closing (Dilate → Erode)
+          {mode === 'batch' ? 'Closing (All)' : 'Closing (Dilate → Erode)'}
         </Button>
 
         <Button
@@ -120,7 +127,7 @@ export const MorphologySection: React.FC = () => {
           disabled={!hasImage || isProcessing}
           className="w-full"
         >
-          Morphological Gradient
+          {mode === 'batch' ? 'Morphological Gradient (All)' : 'Morphological Gradient'}
         </Button>
       </div>
 
@@ -130,6 +137,12 @@ export const MorphologySection: React.FC = () => {
           💡 Tip: Convert to grayscale first for better morphology results
         </p>
       </div>
+
+      {isProcessing && mode === 'batch' && (
+        <div className="mt-3 text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded animate-pulse">
+          Processing batch... Please wait
+        </div>
+      )}
     </Accordion>
   );
 };
